@@ -54,7 +54,6 @@
   }
   .section-label em{font-style:normal;color:#5d577e;font-size:11px;}
 
-  /* 祝福标签 */
   .bless-tags{
     display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
     margin-bottom:22px;
@@ -101,13 +100,18 @@
     border:1px solid rgba(255,255,255,.1);padding:8px 16px;font-size:14px;
   }
   .btn.ghost:hover{color:var(--text);background:rgba(255,255,255,.12);}
+  .btn.ghost.active{
+    background:linear-gradient(135deg,var(--gold),#c9963c);
+    color:#241d47;border-color:transparent;font-weight:700;
+  }
   #joinForm .btn{width:100%;padding:16px;font-size:17px;}
 
   /* ---------- 主持人页面 ---------- */
   .hdr{
     height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;
     padding:0 22px;border-bottom:1px solid rgba(255,255,255,.07);
-    background:rgba(23,20,43,.6);backdrop-filter:blur(10px);z-index:5;
+    background:rgba(23,20,43,.6);backdrop-filter:blur(10px);z-index:200;
+    position:relative;
   }
   .brand{font-size:19px;font-weight:700;letter-spacing:1px;color:var(--gold-l);}
   .room-tag{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;}
@@ -206,43 +210,65 @@
   .winner-item .avatar{width:32px;height:32px;font-size:13px;}
   .winner-item span{font-size:14px;color:var(--gold-l);}
 
-  /* ---------- 弹窗通用 ---------- */
+  /* ---------- 弹幕层 ---------- */
+  .danmaku-layer{
+    position:fixed;top:64px;left:0;right:0;bottom:0;
+    overflow:hidden;pointer-events:none;z-index:150;
+    background:radial-gradient(circle at 50% 0%,rgba(36,29,71,.55) 0%,rgba(12,10,24,.72) 60%);
+    backdrop-filter:blur(2px);
+    animation:fadeIn .35s ease;
+  }
+  .danmaku{
+    position:absolute;left:0;
+    display:flex;align-items:center;gap:10px;
+    padding:8px 20px;border-radius:999px;white-space:nowrap;
+    background:rgba(23,20,43,.88);
+    border:1px solid rgba(233,196,106,.28);
+    box-shadow:0 4px 22px rgba(0,0,0,.45);
+    font-size:clamp(15px,1.6vw,20px);
+    will-change:transform;
+    animation-name:dm-move;
+    animation-timing-function:linear;
+    animation-fill-mode:forwards;
+  }
+  @keyframes dm-move{
+    from{transform:translateX(100vw);}
+    to{transform:translateX(-100%);}
+  }
+  .dm-avatar{
+    display:flex;align-items:center;justify-content:center;flex:none;
+    width:1.7em;height:1.7em;border-radius:50%;
+    font-size:.72em;font-weight:800;color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.35);
+  }
+  .dm-name{color:var(--gold);font-weight:700;}
+  .dm-text{color:#e8e3f5;font-style:italic;}
+  .dm-hint{
+    position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+    font-size:14px;color:var(--gold-l);letter-spacing:2px;
+    background:rgba(23,20,43,.9);border:1px solid rgba(233,196,106,.3);
+    padding:10px 26px;border-radius:999px;
+    animation:fadeIn .5s ease;
+  }
+
+  /* ---------- 二维码弹窗 ---------- */
   .modal{
-    position:fixed;inset:0;background:rgba(6,4,14,.88);z-index:100;
+    position:fixed;inset:0;background:rgba(6,4,14,.88);z-index:300;
     display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);
     padding:20px;
   }
   .modal-card{
     background:var(--panel2);border-radius:24px;padding:28px;text-align:center;
     border:1px solid rgba(233,196,106,.2);max-width:520px;width:100%;
-    max-height:88vh;display:flex;flex-direction:column;
   }
-  .modal-card h2{margin:0 0 20px;font-size:19px;color:var(--gold-l);letter-spacing:2px;flex:none;}
-  .qr-box{background:#fff;padding:12px;border-radius:16px;display:inline-block;align-self:center;}
+  .modal-card h2{margin:0 0 20px;font-size:19px;color:var(--gold-l);letter-spacing:2px;}
+  .qr-box{background:#fff;padding:12px;border-radius:16px;display:inline-block;}
   .qr-box img{display:block;width:min(240px,58vw);height:min(240px,58vw);}
   .qr-url{
     font-size:12px;color:var(--muted);margin:14px auto 18px;
     word-break:break-all;max-width:300px;
   }
   .qr-warn{color:#ff9d6b;font-size:12px;margin-bottom:14px;}
-
-  /* ---------- 祝福墙 ---------- */
-  .blessing-wall{
-    flex:1;overflow-y:auto;text-align:left;padding-right:6px;
-    display:flex;flex-direction:column;gap:12px;margin-bottom:18px;
-  }
-  .blessing-wall::-webkit-scrollbar{width:5px;}
-  .blessing-wall::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
-  .blessing-card{
-    display:flex;gap:12px;padding:14px;
-    background:rgba(255,255,255,.04);border-radius:14px;
-    border:1px solid rgba(255,255,255,.06);
-  }
-  .blessing-card .avatar{width:42px;height:42px;font-size:16px;flex:none;}
-  .bc-body{flex:1;min-width:0;}
-  .bc-name{font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;}
-  .bc-text{font-size:15px;line-height:1.6;color:#d8d3ec;word-break:break-word;font-style:italic;}
-  .wall-empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 0;}
 
   @media (max-width:820px){
     .side{width:190px;}
@@ -285,7 +311,7 @@
   <header class="hdr">
     <div class="brand">💍 婚礼抽奖 <span class="room-tag" id="roomTag"></span></div>
     <div class="hdr-actions">
-      <button class="btn ghost" id="wallBtn">💌 祝福墙</button>
+      <button class="btn ghost" id="danmakuBtn">💌 弹幕</button>
       <button class="btn ghost" id="qrBtn">📱 扫码入口</button>
       <button class="btn ghost" id="resetBtn">↺ 重置</button>
     </div>
@@ -323,6 +349,9 @@
       </div>
     </section>
   </div>
+
+  <!-- 弹幕层 -->
+  <div id="danmakuLayer" class="danmaku-layer hidden"></div>
 </div>
 
 <!-- ==================== 二维码弹窗 ==================== -->
@@ -338,15 +367,6 @@
   </div>
 </div>
 
-<!-- ==================== 祝福墙弹窗 ==================== -->
-<div class="modal hidden" id="wallModal">
-  <div class="modal-card">
-    <h2>💌 宾客祝福</h2>
-    <div class="blessing-wall" id="blessingWall"></div>
-    <button class="btn primary" id="wallClose">关闭</button>
-  </div>
-</div>
-
 <script>
 (function () {
   'use strict';
@@ -358,7 +378,6 @@
   const TOPIC       = 'wedding-lottery';
   const PRIZE_NAMES = { '1': '一等奖', '2': '二等奖', '3': '三等奖' };
 
-  // 预设祝福语（可自行增删）
   const BLESSINGS = [
     '百年好合', '永结同心', '白头偕老', '早生贵子',
     '新婚快乐', '幸福美满', '甜甜蜜蜜', '相濡以沫',
@@ -387,14 +406,20 @@
   /* =========================================================
      全局状态
      ========================================================= */
-  let users          = [];
-  let winners        = { '1': [], '2': [], '3': [] };
-  let currentPrize   = '1';
-  let spinning       = false;
-  let reelTimer      = null;
-  let mqttClient     = null;
-  let bc             = null;
-  let selectedBless  = '';   // 用户端当前选中的祝福
+  let users         = [];
+  let winners       = { '1': [], '2': [], '3': [] };
+  let currentPrize  = '1';
+  let spinning      = false;
+  let reelTimer     = null;
+  let mqttClient    = null;
+  let bc            = null;
+  let selectedBless = '';
+
+  // 弹幕状态
+  let danmakuOn     = false;
+  let danmakuTimer  = null;
+  let danmakuQueue  = [];
+  let trackLastUsed = {};
 
   /* =========================================================
      工具函数
@@ -483,7 +508,6 @@
       tag.onclick = function () {
         const val = tag.dataset.bless;
         if (selectedBless === val) {
-          // 再点一次取消选择
           selectedBless = '';
           tag.classList.remove('active');
         } else {
@@ -514,12 +538,8 @@
   function doJoin() {
     const name = document.getElementById('nameInput').value.trim();
 
-    if (!name) {
-      alert('请填写你的名字'); return;
-    }
-    if (!selectedBless) {
-      alert('请点选一句祝福送给新人吧～'); return;
-    }
+    if (!name) { alert('请填写你的名字'); return; }
+    if (!selectedBless) { alert('请点选一句祝福送给新人吧～'); return; }
 
     let me = readJSON(K.me, null);
     if (me) {
@@ -575,17 +595,14 @@
     renderWinners();
     updateBadge();
 
-    document.getElementById('qrBtn').onclick    = showQR;
-    document.getElementById('qrClose').onclick  = function () {
+    document.getElementById('qrBtn').onclick      = showQR;
+    document.getElementById('qrClose').onclick    = function () {
       document.getElementById('qrModal').classList.add('hidden');
     };
-    document.getElementById('wallBtn').onclick  = showWall;
-    document.getElementById('wallClose').onclick = function () {
-      document.getElementById('wallModal').classList.add('hidden');
-    };
-    document.getElementById('resetBtn').onclick = resetAll;
-    document.getElementById('startBtn').onclick = startSpin;
-    document.getElementById('stopBtn').onclick  = stopSpin;
+    document.getElementById('danmakuBtn').onclick = toggleDanmaku;
+    document.getElementById('resetBtn').onclick   = resetAll;
+    document.getElementById('startBtn').onclick   = startSpin;
+    document.getElementById('stopBtn').onclick    = stopSpin;
 
     document.querySelectorAll('.prize-tab').forEach(function (tab) {
       tab.onclick = function () {
@@ -622,6 +639,9 @@
     });
     saveUsers();
     renderUsers();
+
+    // 如果弹幕开启中且队列空了，补一下
+    if (danmakuOn && danmakuQueue.length === 0) refillDanmakuQueue();
   }
 
   function saveUsers()   { localStorage.setItem(K.users, JSON.stringify(users)); }
@@ -673,6 +693,122 @@
 
   function updateBadge() {
     document.getElementById('stageBadge').textContent = PRIZE_NAMES[currentPrize];
+  }
+
+  /* =========================================================
+     弹幕逻辑
+     ========================================================= */
+  function refillDanmakuQueue() {
+    danmakuQueue = users.filter(function (u) { return u.blessing; }).slice();
+    // 洗牌，避免顺序固定
+    for (let i = danmakuQueue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = danmakuQueue[i];
+      danmakuQueue[i] = danmakuQueue[j];
+      danmakuQueue[j] = t;
+    }
+  }
+
+  function toggleDanmaku() {
+    danmakuOn = !danmakuOn;
+
+    const layer = document.getElementById('danmakuLayer');
+    const btn   = document.getElementById('danmakuBtn');
+
+    if (danmakuOn) {
+      layer.classList.remove('hidden');
+      btn.classList.add('active');
+      btn.textContent = '💌 关闭弹幕';
+      startDanmaku();
+    } else {
+      stopDanmaku();
+      layer.classList.add('hidden');
+      btn.classList.remove('active');
+      btn.textContent = '💌 弹幕';
+    }
+  }
+
+  function startDanmaku() {
+    stopDanmaku();
+    trackLastUsed = {};
+    refillDanmakuQueue();
+
+    // 立即连发几条，形成"开场"效果
+    for (let i = 0; i < 4; i++) {
+      setTimeout(spawnDanmaku, i * 300);
+    }
+    // 持续生成
+    danmakuTimer = setInterval(spawnDanmaku, 900);
+
+    // 没有祝福时提示
+    if (users.filter(function (u) { return u.blessing; }).length === 0) {
+      const hint = document.createElement('div');
+      hint.className = 'dm-hint';
+      hint.textContent = '还没有宾客留言，等待大家扫码加入…';
+      hint.id = 'dmHint';
+      document.getElementById('danmakuLayer').appendChild(hint);
+    }
+  }
+
+  function stopDanmaku() {
+    clearInterval(danmakuTimer);
+    danmakuTimer = null;
+    danmakuQueue = [];
+    const layer = document.getElementById('danmakuLayer');
+    if (layer) layer.innerHTML = '';
+  }
+
+  function spawnDanmaku() {
+    if (!danmakuOn) return;
+
+    const layer = document.getElementById('danmakuLayer');
+    if (!layer || layer.classList.contains('hidden')) return;
+
+    // 无祝福用户 → 显示提示
+    if (users.filter(function (u) { return u.blessing; }).length === 0) return;
+
+    // 从队列取；空了就重新洗牌填充
+    if (danmakuQueue.length === 0) refillDanmakuQueue();
+    const u = danmakuQueue.shift();
+    if (!u || !u.blessing) return;
+
+    // 移除提示
+    const hint = document.getElementById('dmHint');
+    if (hint) hint.remove();
+
+    // ---- 分配轨道 ----
+    const layerH = layer.clientHeight || window.innerHeight - 64;
+    const trackH = 62; // 每条轨道高度
+    const topGap = 24;
+    const bottomGap = 60;
+    const tracks = Math.max(1, Math.floor((layerH - topGap - bottomGap) / trackH));
+
+    let track = 0, minTime = Infinity;
+    for (let i = 0; i < tracks; i++) {
+      const t = trackLastUsed[i] || 0;
+      if (t < minTime) { minTime = t; track = i; }
+    }
+    trackLastUsed[track] = Date.now();
+
+    // ---- 创建弹幕 ----
+    const el = document.createElement('div');
+    el.className = 'danmaku';
+    el.style.top  = (topGap + track * trackH) + 'px';
+
+    // 随机飞行时长：内容越短越快
+    const dur = 9 + Math.random() * 5;
+    el.style.animationDuration = dur + 's';
+
+    el.innerHTML =
+      '<span class="dm-avatar" style="background:' + colorFor(u.name) + '">' +
+        esc(u.name.charAt(0)) +
+      '</span>' +
+      '<span class="dm-name">' + esc(u.name) + '</span>' +
+      '<span class="dm-text">「' + esc(u.blessing) + '」</span>';
+
+    layer.appendChild(el);
+
+    el.addEventListener('animationend', function () { el.remove(); });
   }
 
   /* ---------- 抽奖核心 ---------- */
@@ -728,7 +864,6 @@
     renderStage(winner);
     document.getElementById('stage').classList.add('final');
 
-    // 展示祝福语
     const blessEl = document.getElementById('stageBlessing');
     if (winner.blessing) {
       blessEl.textContent = '「' + winner.blessing + '」';
@@ -789,27 +924,6 @@
     document.getElementById('qrModal').classList.remove('hidden');
   }
 
-  /* ---------- 祝福墙 ---------- */
-  function showWall() {
-    const wall = document.getElementById('blessingWall');
-    if (users.length === 0) {
-      wall.innerHTML = '<div class="wall-empty">还没有宾客留言～</div>';
-    } else {
-      wall.innerHTML = users.map(function (u) {
-        return '<div class="blessing-card">' +
-                 '<div class="avatar" style="--c:' + colorFor(u.name) + '">' +
-                   esc(u.name.charAt(0)) +
-                 '</div>' +
-                 '<div class="bc-body">' +
-                   '<div class="bc-name">' + esc(u.name) + '</div>' +
-                   '<div class="bc-text">' + esc(u.blessing || '（未选祝福）') + '</div>' +
-                 '</div>' +
-               '</div>';
-      }).join('');
-    }
-    document.getElementById('wallModal').classList.remove('hidden');
-  }
-
   /* =========================================================
      启动
      ========================================================= */
@@ -817,6 +931,11 @@
   else                 initHostPage();
 
   initRealtime();
+
+  // 窗口尺寸变化时，正在飞的弹幕不受影响，新生成的会自动适配
+  window.addEventListener('resize', function () {
+    trackLastUsed = {};
+  });
 
 })();
 </script>
