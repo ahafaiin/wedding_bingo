@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼流程（折叠互动版）</title>
+    <style>
+        body { font-family: '微软雅黑', sans-serif; background-color: #f7f7f7; margin: 0; padding: 20px; }
+        .container { max-width: 750px; margin: 0 auto; background: #fff; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; font-size: 28px; color: #333; margin-bottom: 10px; }
+        .sub-title { text-align: center; font-size: 18px; color: #666; margin-bottom: 30px; }
+
+        /* 折叠按钮样式（标题栏） */
+        details { border-radius: 8px; margin-bottom: 15px; background: #f0f4f8; border-left: 6px solid #1890ff; overflow: hidden; }
+        details.day2 { border-left-color: #e74c3c; background: #fdf0f0; }
+        
+        summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 15px 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        summary::after { content: '▼ 点击展开细节'; font-size: 14px; color: #888; font-weight: normal; }
+        details[open] summary::after { content: '▲ 点击收起细节'; }
+
+        /* 展开后的详情内容 */
+        .details-content {
+            padding: 0 20px 20px 20px;
+            font-size: 19px;
+            line-height: 1.6;
+            color: #444;
+            background: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .details-content div { margin-top: 10px; }
+        .role { font-weight: bold; }
+
+        /* 时间地点大标题 */
+        .time { font-size: 26px; }
+        .location { color: #1890ff; font-weight: bold; margin-left: 10px; }
+        .location.day2 { color: #e74c3c; }
+        
+        /* 分割线 */
+        .divide { height: 3px; background: #e0e0e0; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Plan B 婚礼流程</h1>
+    <div class="sub-title">出阁宴（花桥） → 婚礼宴（莲湖）<br><span style="font-size:15px; color:#999;">温馨提示：点击下方标题栏可展开或收起细节</span></div>
+
+    <!-- Day 1 -->
+    <div style="font-size: 24px; font-weight: bold; color: #1890ff; margin-bottom: 15px;">第一天（Day 1）</div>
+
+    <details>
+        <summary>
+            <span>11:00 <span class="location">花桥</span></span>
+            女方出阁午宴及彩礼准备
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新娘：</span>准备出阁午宴</div>
+            <div><span class="role">新郎：</span>安排人送彩礼前往新娘家</div>
+            <div><span class="role">父母男/女：</span>筹备次日午宴/红包等</div>
+        </div>
+    </details>
+
+    <details>
+        <summary>
+            <span>14:00 <span class="location">莲湖/大庙</span></span>
+            新人和双方父母彩排，亲友抵达
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新娘：</span>试穿婚纱礼服，前往莲湖彩排，准备接亲游戏</div>
+            <div><span class="role">新郎：</span>试穿礼服，前往莲湖彩排</div>
+            <div><span class="role">父母：</span>筹备次日午宴/红包等，前往莲湖彩排</div>
+            <div><span class="role">亲友/同学（重庆）：</span>由机场/高铁出发，前往莲湖或大庙入住</div>
+        </div>
+    </details>
+
+    <details>
+        <summary>
+            <span>18:00 <span class="location">莲湖/大庙</span></span>
+            新娘留宿莲湖，新郎回大庙招待
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新娘：</span>莲湖彩排，简单晚宴，当晚酒店休整</div>
+            <div><span class="role">新郎：</span>莲湖彩排，简单晚宴，当晚回大庙</div>
+            <div><span class="role">父母：</span>筹备次日午宴，试妆彩排，宴请亲友</div>
+            <div><span class="role">亲友：</span>在莲湖入住后随意溜达，或找新人闲聊</div>
+        </div>
+    </details>
+
+    <div class="divide"></div>
+
+    <!-- Day 2 -->
+    <div style="font-size: 24px; font-weight: bold; color: #e74c3c; margin-bottom: 15px;">第二天（Day 2）</div>
+
+    <details class="day2">
+        <summary>
+            <span>06:00 <span class="location day2">莲湖</span></span>
+            新娘早起化妆，新郎出发接亲
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新娘：</span>在酒店早起化妆，拍照合影</div>
+            <div><span class="role">新郎：</span>从大庙出发前往莲湖，开始简单接亲仪式</div>
+            <div><span class="role">父母：</span>从大庙出发前往莲湖，跟随新人，听从摄影摄像安排</div>
+        </div>
+    </details>
+
+    <details class="day2">
+        <summary>
+            <span>08:00 <span class="location day2">莲湖草坪</span></span>
+            接亲完成，在草坪合影
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新人：</span>接亲完成，在草坪和亲友合影活动</div>
+            <div><span class="role">父母：</span>招待亲友</div>
+            <div><span class="role">亲友：</span>开始前往莲湖，早到可参与合影</div>
+        </div>
+    </details>
+
+    <details class="day2">
+        <summary>
+            <span>12:00 <span class="location day2">莲湖</span></span>
+            草坪婚礼仪式及午宴
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新人：</span>开始草坪婚礼仪式，结束后开始用餐</div>
+            <div><span class="role">父母：</span>跟随新人，听从摄影摄像安排</div>
+            <div><span class="role">亲友：</span>参加婚礼仪式，准备开始用餐</div>
+        </div>
+    </details>
+
+    <details class="day2">
+        <summary>
+            <span>14:00-17:00 <span class="location day2">莲湖</span></span>
+            拍照、招待亲友，陆续准备返程
+        </summary>
+        <div class="details-content">
+            <div><span class="role">新人：</span>自由安排，可拍照留影；或下午前往重庆准备接亲物品</div>
+            <div><span class="role">父母：</span>招待亲友，棋牌安排，等待晚宴，整理份子钱</div>
+            <div><span class="role">亲友：</span>棋牌游戏，或随意溜达等待晚宴；部分亲友可提前回家不参加晚宴</div>
+        </div>
+    </details>
+
+</div>
+
+</body>
+</html>
