@@ -27,23 +27,31 @@
     background:var(--c,linear-gradient(135deg,#5a5478,#3a3556));
     text-shadow:0 2px 8px rgba(0,0,0,.35);
   }
-  .avatar.xl{width:clamp(150px,22vw,230px);height:clamp(150px,22vw,230px);font-size:clamp(60px,9vw,96px);}
-  .avatar.xxl{width:110px;height:110px;font-size:44px;margin:0 auto 16px;}
+  .avatar.xl{width:clamp(140px,20vw,210px);height:clamp(140px,20vw,210px);font-size:clamp(56px,8vw,88px);}
+  .avatar.xxl{width:100px;height:100px;font-size:40px;margin:0 auto 14px;}
 
   /* ---------- 用户加入页 ---------- */
-  .join-wrap{margin:auto;text-align:center;padding:32px 24px;max-width:400px;width:100%;}
-  .join-emoji{font-size:56px;line-height:1;}
-  .join-title{font-size:30px;margin:10px 0 6px;color:var(--gold-l);letter-spacing:4px;}
-  .join-sub{color:var(--muted);font-size:14px;margin:0 0 32px;}
+  .join-wrap{margin:auto;text-align:center;padding:28px 24px;max-width:420px;width:100%;}
+  .join-emoji{font-size:52px;line-height:1;}
+  .join-title{font-size:28px;margin:8px 0 4px;color:var(--gold-l);letter-spacing:4px;}
+  .join-sub{color:var(--muted);font-size:13px;margin:0 0 24px;}
   .input{
-    width:100%;padding:16px;border-radius:14px;margin-bottom:16px;
+    width:100%;padding:15px;border-radius:14px;margin-bottom:12px;
     border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);
-    color:var(--text);font-size:17px;text-align:center;outline:none;font-family:inherit;
+    color:var(--text);font-size:16px;text-align:center;outline:none;font-family:inherit;
+    transition:border-color .2s;
   }
+  .input::placeholder{color:#6a6390;}
   .input:focus{border-color:var(--gold);}
-  .done-name{font-size:24px;font-weight:700;color:var(--gold-l);margin-bottom:10px;}
-  .done-tip{color:#7ee0a8;font-size:15px;margin-bottom:6px;}
-  .done-tip.small{color:var(--muted);font-size:13px;}
+  .textarea{
+    resize:none;height:88px;text-align:left;line-height:1.5;
+    font-size:15px;padding:13px 16px;
+  }
+  .done-name{font-size:22px;font-weight:700;color:var(--gold-l);margin-bottom:8px;}
+  .done-info{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.6;}
+  .done-info .bless{color:var(--gold-l);font-style:italic;}
+  .done-tip{color:#7ee0a8;font-size:14px;margin-bottom:6px;}
+  .done-tip.small{color:var(--muted);font-size:12px;}
 
   /* ---------- 按钮 ---------- */
   .btn{
@@ -60,13 +68,13 @@
     box-shadow:0 6px 24px rgba(214,59,59,.35);
   }
   .btn.stop:hover{transform:translateY(-2px);}
-  .btn.big{padding:16px 66px;font-size:20px;letter-spacing:5px;border-radius:14px;}
+  .btn.big{padding:16px 60px;font-size:19px;letter-spacing:5px;border-radius:14px;}
   .btn.ghost{
     background:rgba(255,255,255,.06);color:var(--muted);
     border:1px solid rgba(255,255,255,.1);padding:8px 16px;font-size:14px;
   }
   .btn.ghost:hover{color:var(--text);background:rgba(255,255,255,.12);}
-  #joinForm .btn{width:100%;padding:16px;font-size:17px;}
+  #joinForm .btn{width:100%;padding:15px;font-size:17px;margin-top:4px;}
 
   /* ---------- 主持人页面 ---------- */
   .hdr{
@@ -88,19 +96,20 @@
   .side-title{font-size:13px;color:var(--muted);margin-bottom:12px;flex:none;}
   .side-title b{color:var(--gold);font-size:20px;margin:0 2px;}
   .user-grid{
-    flex:1;overflow-y:auto;display:grid;gap:12px 6px;align-content:start;
-    grid-template-columns:repeat(auto-fill,minmax(62px,1fr));
+    flex:1;overflow-y:auto;display:grid;gap:14px 6px;align-content:start;
+    grid-template-columns:repeat(auto-fill,minmax(66px,1fr));
   }
   .user-grid::-webkit-scrollbar{width:5px;}
   .user-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
-  .user-chip{display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .user-chip{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
   .user-chip .avatar{width:44px;height:44px;font-size:17px;}
-  .user-chip span{
+  .user-chip .chip-name{
     font-size:11px;color:var(--muted);max-width:100%;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
+  .user-chip .chip-phone{font-size:10px;color:#5d577e;letter-spacing:.5px;}
   .user-chip.won .avatar{filter:grayscale(.85) brightness(.55);}
-  .user-chip.won span{opacity:.4;text-decoration:line-through;}
+  .user-chip.won .chip-name{opacity:.4;text-decoration:line-through;}
   .side-empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0;}
 
   .stage-panel{
@@ -123,7 +132,7 @@
 
   .stage{
     flex:1;position:relative;width:100%;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
   }
   .stage-badge{
     position:absolute;top:8px;right:8px;font-size:13px;color:var(--gold);
@@ -141,11 +150,27 @@
   }
   @keyframes pop{0%{transform:scale(.75)}60%{transform:scale(1.14)}100%{transform:scale(1)}}
   .stage-name{
-    font-size:clamp(26px,3.4vw,44px);font-weight:800;letter-spacing:3px;
+    font-size:clamp(24px,3.2vw,40px);font-weight:800;letter-spacing:3px;
     color:var(--gold-l);min-height:1.2em;text-align:center;
   }
+  .stage-info{
+    text-align:center;max-width:min(640px,90%);
+    animation:fadeIn .5s ease;
+  }
+  .stage-phone{
+    font-size:14px;color:var(--muted);letter-spacing:2px;
+    margin-bottom:10px;
+  }
+  .stage-blessing{
+    font-size:clamp(15px,1.5vw,18px);line-height:1.7;
+    color:var(--gold-l);font-style:italic;
+    padding:14px 22px;border-radius:14px;
+    background:rgba(233,196,106,.08);
+    border:1px solid rgba(233,196,106,.18);
+  }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-  .controls{display:flex;gap:16px;margin-bottom:14px;flex:none;}
+  .controls{display:flex;gap:16px;margin-bottom:12px;flex:none;}
 
   .winner-bar{width:100%;flex:none;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;}
   .winner-title{font-size:13px;color:var(--muted);margin-bottom:8px;}
@@ -160,27 +185,52 @@
   .winner-item .avatar{width:32px;height:32px;font-size:13px;}
   .winner-item span{font-size:14px;color:var(--gold-l);}
 
-  /* ---------- 二维码弹窗 ---------- */
+  /* ---------- 弹窗通用 ---------- */
   .modal{
     position:fixed;inset:0;background:rgba(6,4,14,.88);z-index:100;
     display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);
+    padding:20px;
   }
   .modal-card{
-    background:var(--panel2);border-radius:24px;padding:32px;text-align:center;
-    border:1px solid rgba(233,196,106,.2);
+    background:var(--panel2);border-radius:24px;padding:28px;text-align:center;
+    border:1px solid rgba(233,196,106,.2);max-width:520px;width:100%;
+    max-height:88vh;display:flex;flex-direction:column;
   }
-  .modal-card h2{margin:0 0 20px;font-size:20px;color:var(--gold-l);letter-spacing:2px;}
-  .qr-box{background:#fff;padding:12px;border-radius:16px;display:inline-block;}
-  .qr-box img{display:block;width:min(260px,60vw);height:min(260px,60vw);}
+  .modal-card h2{margin:0 0 20px;font-size:19px;color:var(--gold-l);letter-spacing:2px;flex:none;}
+  .qr-box{background:#fff;padding:12px;border-radius:16px;display:inline-block;align-self:center;}
+  .qr-box img{display:block;width:min(240px,58vw);height:min(240px,58vw);}
   .qr-url{
-    font-size:12px;color:var(--muted);margin:14px auto 20px;
+    font-size:12px;color:var(--muted);margin:14px auto 18px;
     word-break:break-all;max-width:300px;
   }
-  .qr-warn{color:#ff9d6b;font-size:12px;margin-top:10px;}
+  .qr-warn{color:#ff9d6b;font-size:12px;margin-bottom:14px;}
+
+  /* ---------- 祝福墙 ---------- */
+  .blessing-wall{
+    flex:1;overflow-y:auto;text-align:left;padding-right:6px;
+    display:flex;flex-direction:column;gap:12px;margin-bottom:18px;
+  }
+  .blessing-wall::-webkit-scrollbar{width:5px;}
+  .blessing-wall::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+  .blessing-card{
+    display:flex;gap:12px;padding:14px;
+    background:rgba(255,255,255,.04);border-radius:14px;
+    border:1px solid rgba(255,255,255,.06);
+  }
+  .blessing-card .avatar{width:42px;height:42px;font-size:16px;flex:none;}
+  .bc-body{flex:1;min-width:0;}
+  .bc-name{
+    font-size:14px;font-weight:700;color:var(--gold-l);
+    margin-bottom:4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  }
+  .bc-name em{font-style:normal;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:1px;}
+  .bc-text{font-size:14px;line-height:1.6;color:#d8d3ec;word-break:break-word;}
+  .wall-empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 0;}
 
   @media (max-width:820px){
     .side{width:190px;}
-    .btn.big{padding:14px 44px;font-size:18px;}
+    .btn.big{padding:14px 40px;font-size:17px;}
+    .prize-tab{padding:7px 14px;font-size:13px;}
   }
 </style>
 </head>
@@ -191,17 +241,23 @@
   <div class="join-wrap">
     <div class="join-emoji">💍</div>
     <h1 class="join-title">婚礼抽奖</h1>
-    <p class="join-sub">输入你的名字，即可加入抽奖池</p>
+    <p class="join-sub">留下联系方式与祝福，即可加入抽奖池</p>
 
     <div id="joinForm">
       <input id="nameInput" class="input" type="text" placeholder="你的名字 / 昵称"
              maxlength="8" autocomplete="off">
+      <input id="phoneInput" class="input" type="tel" placeholder="手机号（中奖后联系您）"
+             maxlength="11" inputmode="numeric" autocomplete="off">
+      <textarea id="blessingInput" class="input textarea"
+                placeholder="写一句祝福送给新人吧～（60字内）"
+                maxlength="60"></textarea>
       <button id="joinBtn" class="btn primary">加入抽奖</button>
     </div>
 
     <div id="joinDone" class="hidden">
       <div class="avatar xxl" id="meAvatar">?</div>
       <div class="done-name" id="meName"></div>
+      <div class="done-info" id="meInfo"></div>
       <div class="done-tip">✅ 已加入抽奖池</div>
       <div class="done-tip small">请留意大屏幕，祝你好运！</div>
     </div>
@@ -213,6 +269,7 @@
   <header class="hdr">
     <div class="brand">💍 婚礼抽奖 <span class="room-tag" id="roomTag"></span></div>
     <div class="hdr-actions">
+      <button class="btn ghost" id="wallBtn">💌 祝福墙</button>
       <button class="btn ghost" id="qrBtn">📱 扫码入口</button>
       <button class="btn ghost" id="resetBtn">↺ 重置</button>
     </div>
@@ -236,6 +293,10 @@
         <div class="stage-badge" id="stageBadge">一等奖</div>
         <div class="avatar xl" id="stageAvatar">?</div>
         <div class="stage-name" id="stageName">准备开始</div>
+        <div class="stage-info hidden" id="stageInfo">
+          <div class="stage-phone" id="stagePhone"></div>
+          <div class="stage-blessing" id="stageBlessing"></div>
+        </div>
       </div>
 
       <div class="controls">
@@ -264,6 +325,15 @@
   </div>
 </div>
 
+<!-- ==================== 祝福墙弹窗 ==================== -->
+<div class="modal hidden" id="wallModal">
+  <div class="modal-card">
+    <h2>💌 宾客祝福</h2>
+    <div class="blessing-wall" id="blessingWall"></div>
+    <button class="btn primary" id="wallClose">关闭</button>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -271,14 +341,13 @@
   /* =========================================================
      基础配置
      ========================================================= */
-  const MQTT_BROKER = 'wss://broker.emqx.io:8084/mqtt'; // 公共免费 MQTT，用于跨设备实时同步
+  const MQTT_BROKER = 'wss://broker.emqx.io:8084/mqtt';
   const TOPIC       = 'wedding-lottery';
   const PRIZE_NAMES = { '1': '一等奖', '2': '二等奖', '3': '三等奖' };
 
   const params = new URLSearchParams(location.search);
   const MODE   = params.get('mode') === 'user' ? 'user' : 'host';
 
-  // 房间号
   let roomId = (params.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (MODE === 'host') {
     if (!roomId) {
@@ -310,7 +379,7 @@
      工具函数
      ========================================================= */
   function esc(s) {
-    return String(s).replace(/[&<>"']/g, c =>
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   }
   function readJSON(key, def) {
@@ -321,15 +390,22 @@
   }
   function colorFor(name) {
     let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    const s = String(name || '?');
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
     return `linear-gradient(135deg,hsl(${h},70%,58%),hsl(${(h + 45) % 360},70%,44%))`;
+  }
+  function isValidPhone(p) {
+    return /^1[3-9]\d{9}$/.test(p);
+  }
+  function maskPhone(p) {
+    if (!p || p.length < 7) return p || '';
+    return p.slice(0, 3) + '****' + p.slice(-4);
   }
 
   /* =========================================================
-     实时通信层（MQTT 跨设备 + BroadcastChannel 同浏览器）
+     实时通信层
      ========================================================= */
   function initRealtime() {
-    // 1) MQTT —— 手机扫码后数据能同步到大屏
     if (window.mqtt && typeof window.mqtt.connect === 'function') {
       try {
         mqttClient = window.mqtt.connect(MQTT_BROKER, {
@@ -339,16 +415,14 @@
           clean: true,
           keepalive: 30
         });
-
         mqttClient.on('connect', onMqttConnect);
         mqttClient.on('message', onMqttMessage);
-        mqttClient.on('error', function () { /* 静默，降级到本地通道 */ });
+        mqttClient.on('error', function () {});
       } catch (e) {
         mqttClient = null;
       }
     }
 
-    // 2) BroadcastChannel —— 同一浏览器多标签页实时同步（本地演示用）
     if ('BroadcastChannel' in window) {
       bc = new BroadcastChannel('wl_' + roomId);
       bc.onmessage = function (e) { handleEvent(e.data); };
@@ -362,7 +436,6 @@
         `${TOPIC}/${roomId}/event`
       ]);
     } else {
-      // 用户端重连后补发自己的报名信息
       const me = readJSON(K.me, null);
       if (me) publishJoin(me);
     }
@@ -373,12 +446,8 @@
     const kind  = parts[parts.length - 2];
     let data;
     try { data = JSON.parse(payload.toString()); } catch (e) { return; }
-
-    if (kind === 'user') {
-      addUser(data);
-    } else if (kind === 'event') {
-      handleEvent(data);
-    }
+    if (kind === 'user')      addUser(data);
+    else if (kind === 'event') handleEvent(data);
   }
 
   function handleEvent(msg) {
@@ -396,23 +465,35 @@
     if (me) showJoined(me);
 
     document.getElementById('joinBtn').onclick = doJoin;
-    document.getElementById('nameInput').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') doJoin();
+    document.getElementById('blessingInput').addEventListener('input', function () {
+      // 实时显示剩余字数
     });
   }
 
   function doJoin() {
-    const input = document.getElementById('nameInput');
-    const name  = input.value.trim();
-    if (!name) { input.focus(); return; }
+    const name     = document.getElementById('nameInput').value.trim();
+    const phone    = document.getElementById('phoneInput').value.trim();
+    const blessing = document.getElementById('blessingInput').value.trim();
+
+    if (!name) {
+      alert('请填写你的名字'); return;
+    }
+    if (!isValidPhone(phone)) {
+      alert('请填写正确的 11 位手机号'); return;
+    }
+    if (!blessing) {
+      alert('请写一句祝福送给新人吧～'); return;
+    }
 
     let me = readJSON(K.me, null);
     if (me) {
-      me.name = name;
+      me.name = name; me.phone = phone; me.blessing = blessing;
     } else {
       me = {
         id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         name: name,
+        phone: phone,
+        blessing: blessing,
         joinedAt: Date.now()
       };
     }
@@ -422,7 +503,6 @@
   }
 
   function publishJoin(user) {
-    // MQTT retained 消息：主持人随时打开都能收到
     if (mqttClient && mqttClient.connected) {
       mqttClient.publish(
         `${TOPIC}/${roomId}/user/${user.id}`,
@@ -430,7 +510,6 @@
         { retain: true, qos: 0 }
       );
     }
-    // 同浏览器标签页
     if (bc) bc.postMessage({ type: 'join', user: user });
   }
 
@@ -442,6 +521,8 @@
     av.style.setProperty('--c', colorFor(me.name));
     av.textContent = me.name.charAt(0);
     document.getElementById('meName').textContent = me.name;
+    document.getElementById('meInfo').innerHTML =
+      maskPhone(me.phone) + '<br><span class="bless">「' + esc(me.blessing) + '」</span>';
   }
 
   /* =========================================================
@@ -451,7 +532,6 @@
     document.getElementById('hostPage').classList.remove('hidden');
     document.getElementById('roomTag').textContent = '房间 ' + roomId;
 
-    // 读取本地缓存
     users   = readJSON(K.users, []);
     winners = readJSON(K.winners, { '1': [], '2': [], '3': [] });
     ['1', '2', '3'].forEach(function (k) { if (!Array.isArray(winners[k])) winners[k] = []; });
@@ -463,6 +543,10 @@
     document.getElementById('qrBtn').onclick    = showQR;
     document.getElementById('qrClose').onclick  = function () {
       document.getElementById('qrModal').classList.add('hidden');
+    };
+    document.getElementById('wallBtn').onclick  = showWall;
+    document.getElementById('wallClose').onclick = function () {
+      document.getElementById('wallModal').classList.add('hidden');
     };
     document.getElementById('resetBtn').onclick = resetAll;
     document.getElementById('startBtn').onclick = startSpin;
@@ -487,24 +571,28 @@
 
     const exist = users.find(function (x) { return x.id === u.id; });
     if (exist) {
-      if (exist.name !== u.name) {
-        exist.name = u.name;
+      if (exist.name !== u.name || exist.phone !== u.phone || exist.blessing !== u.blessing) {
+        exist.name     = u.name;
+        exist.phone    = u.phone || '';
+        exist.blessing = u.blessing || '';
         saveUsers();
         renderUsers();
       }
       return;
     }
-    users.push({ id: u.id, name: u.name, joinedAt: u.joinedAt || Date.now() });
+    users.push({
+      id: u.id,
+      name: u.name,
+      phone: u.phone || '',
+      blessing: u.blessing || '',
+      joinedAt: u.joinedAt || Date.now()
+    });
     saveUsers();
     renderUsers();
   }
 
-  function saveUsers() {
-    localStorage.setItem(K.users, JSON.stringify(users));
-  }
-  function saveWinners() {
-    localStorage.setItem(K.winners, JSON.stringify(winners));
-  }
+  function saveUsers()   { localStorage.setItem(K.users, JSON.stringify(users)); }
+  function saveWinners() { localStorage.setItem(K.winners, JSON.stringify(winners)); }
 
   function getWinnerIds() {
     const s = new Set();
@@ -520,17 +608,20 @@
   }
 
   function renderUsers() {
-    const grid    = document.getElementById('userGrid');
-    const wonIds  = getWinnerIds();
+    const grid   = document.getElementById('userGrid');
+    const wonIds = getWinnerIds();
     document.getElementById('userCount').textContent = users.length;
     document.getElementById('sideEmpty').classList.toggle('hidden', users.length > 0);
 
     grid.innerHTML = users.map(function (u) {
-      return '<div class="user-chip' + (wonIds.has(u.id) ? ' won' : '') + '">' +
+      const tail = u.phone ? u.phone.slice(-4) : '----';
+      return '<div class="user-chip' + (wonIds.has(u.id) ? ' won' : '') + '" title="' +
+               esc(u.blessing || '') + '">' +
                '<div class="avatar" style="--c:' + colorFor(u.name) + '">' +
                  esc(u.name.charAt(0)) +
                '</div>' +
-               '<span>' + esc(u.name) + '</span>' +
+               '<span class="chip-name">' + esc(u.name) + '</span>' +
+               '<span class="chip-phone">尾号' + esc(tail) + '</span>' +
              '</div>';
     }).join('');
   }
@@ -565,6 +656,7 @@
 
     spinning = true;
     document.getElementById('stage').classList.remove('final');
+    document.getElementById('stageInfo').classList.add('hidden');
     document.getElementById('startBtn').classList.add('hidden');
     document.getElementById('stopBtn').classList.remove('hidden');
 
@@ -581,7 +673,6 @@
     const pool   = getPool();
     const winner = pool[Math.floor(Math.random() * pool.length)];
 
-    // 减速定格动画
     let delay = 70;
     let n     = 0;
     (function tick() {
@@ -606,6 +697,14 @@
     renderStage(winner);
     document.getElementById('stage').classList.add('final');
 
+    // 展示手机号与祝福
+    const info = document.getElementById('stageInfo');
+    document.getElementById('stagePhone').textContent =
+      winner.phone ? maskPhone(winner.phone) : '';
+    document.getElementById('stageBlessing').textContent =
+      winner.blessing ? '「' + winner.blessing + '」' : '';
+    info.classList.toggle('hidden', !winner.phone && !winner.blessing);
+
     winners[currentPrize] = winners[currentPrize] || [];
     winners[currentPrize].push(winner);
     saveWinners();
@@ -621,7 +720,7 @@
 
   /* ---------- 重置 ---------- */
   function resetAll() {
-    if (!confirm('确定清空本轮所有中奖记录吗？（用户名单保留）')) return;
+    if (!confirm('确定清空本轮所有中奖记录吗？（用户名单与祝福保留）')) return;
 
     winners = { '1': [], '2': [], '3': [] };
     saveWinners();
@@ -629,6 +728,7 @@
     renderUsers();
 
     document.getElementById('stage').classList.remove('final');
+    document.getElementById('stageInfo').classList.add('hidden');
     const av = document.getElementById('stageAvatar');
     av.style.removeProperty('--c');
     av.textContent = '?';
@@ -652,11 +752,32 @@
     document.getElementById('qrImg').src =
       'https://api.qrserver.com/v1/create-qr-code/?size=520x520&margin=8&data=' +
       encodeURIComponent(url);
-
     document.getElementById('qrWarn')
             .classList.toggle('hidden', location.protocol !== 'file:');
-
     document.getElementById('qrModal').classList.remove('hidden');
+  }
+
+  /* ---------- 祝福墙 ---------- */
+  function showWall() {
+    const wall = document.getElementById('blessingWall');
+    if (users.length === 0) {
+      wall.innerHTML = '<div class="wall-empty">还没有宾客留言～</div>';
+    } else {
+      wall.innerHTML = users.map(function (u) {
+        return '<div class="blessing-card">' +
+                 '<div class="avatar" style="--c:' + colorFor(u.name) + '">' +
+                   esc(u.name.charAt(0)) +
+                 '</div>' +
+                 '<div class="bc-body">' +
+                   '<div class="bc-name">' + esc(u.name) +
+                     '<em>' + esc(u.phone ? maskPhone(u.phone) : '') + '</em>' +
+                   '</div>' +
+                   '<div class="bc-text">' + esc(u.blessing || '（未填写祝福）') + '</div>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+    }
+    document.getElementById('wallModal').classList.remove('hidden');
   }
 
   /* =========================================================
