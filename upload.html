@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>婚礼照片墙 · 上传照片参与抽奖</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    background: #f8f7f4;
+    color: #1a1a1a;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .header { text-align: center; padding: 40px 20px 20px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 2px; color: #1a1a1a; }
+  .header p { font-size: 13px; color: #999; margin-top: 8px; letter-spacing: 1px; }
+
+  .canvas-container {
+    position: relative; width: 100%; height: 55vh; overflow: hidden; cursor: grab;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(200,195,190,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(180,175,170,0.1) 0%, transparent 50%);
+  }
+  .canvas-container:active { cursor: grabbing; }
+  .canvas-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; will-change: transform; }
+  .photo-item {
+    position: absolute; border-radius: 4px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease; background: #eee;
+  }
+  .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.6s ease; }
+  .photo-item img.loaded { opacity: 1; }
+  .photo-item::after {
+    content: ''; position: absolute; inset: 0;
+    border: 1px solid rgba(0,0,0,0.06); border-radius: 4px; pointer-events: none;
+  }
+
+  .upload-section { padding: 24px 20px 40px; text-align: center; }
+  .upload-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    background: #1a1a1a; color: #fff; border: none; padding: 16px 48px;
+    border-radius: 50px; font-size: 16px; font-weight: 600; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .upload-btn:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+  .upload-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+  .upload-btn svg { width: 20px; height: 20px; fill: currentColor; }
+  .upload-hint { font-size: 12px; color: #aaa; margin-top: 14px; letter-spacing: 0.5px; }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #1a1a1a; color: #fff; padding: 12px 28px;
+    border-radius: 50px; font-size: 14px; letter-spacing: 1px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 9999; max-width: 90vw; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #c0392b; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(248,247,244,0.9);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9998; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .overlay.show { opacity: 1; pointer-events: all; }
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid #e0e0e0;
+    border-top-color: #1a1a1a; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .overlay p { margin-top: 16px; font-size: 14px; color: #666; letter-spacing: 1px; }
+  .photo-count { font-size: 12px; color: #bbb; margin-top: 8px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>我们的婚礼</h1>
+  <p>定格美好瞬间 · 上传照片参与抽奖</p>
+</div>
+
+<div class="canvas-container" id="canvasContainer">
+  <div class="canvas-inner" id="canvasInner"></div>
+</div>
+
+<div class="upload-section">
+  <button class="upload-btn" id="uploadBtn">
+    <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>
+    上传照片 · 参与抽奖
+  </button>
+  <p class="upload-hint">支持 JPG / PNG / WEBP，单张不超过 10MB</p>
+  <p class="photo-count" id="photoCount"></p>
+</div>
+
+<input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none" multiple>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <p id="overlayText">正在上传照片...</p>
+</div>
+
+<script>
+// ====== 配置区域 ======
+const GITHUB_OWNER = 'ahafaiin';
+const GITHUB_REPO  = 'wedding_bingo';
+const GITHUB_BRANCH = 'main';
+const GITHUB_TOKEN = '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';
+// =====================
+
+const API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents`;
+const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const PHOTOS_JSON_PATH = 'photos.json';
+
+// ====== 工具函数 ======
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = 'toast', 3000);
+}
+function showOverlay(text) {
+  document.getElementById('overlayText').textContent = text;
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+
+function utf8ToBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function base64ToUtf8(base64) {
+  const binary = atob(base64.replace(/\n/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ====== GitHub API ======
+async function getFileSha(path) {
+  try {
+    const resp = await fetch(`${API_BASE}/${path}?ref=${GITHUB_BRANCH}&t=${Date.now()}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.sha;
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function uploadFileToGitHub(path, base64Content, commitMsg) {
+  const body = { message: commitMsg, content: base64Content, branch: GITHUB_BRANCH };
+  const sha = await getFileSha(path);
+  if (sha) body.sha = sha;
+  const resp = await fetch(`${API_BASE}/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.message || '上传失败');
+  }
+  return resp.json();
+}
+
+async function loadPhotoIndex() {
+  try {
+    const resp = await fetch(`${API_BASE}/${PHOTOS_JSON_PATH}?ref=${GITHUB_BRANCH}&t=${Date.now()}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return JSON.parse(base64ToUtf8(data.content));
+    }
+  } catch (e) { console.warn('加载索引失败', e); }
+  return { photos: [], lastUpdated: '' };
+}
+
+async function savePhotoIndex(index) {
+  index.lastUpdated = new Date().toISOString();
+  const base64 = utf8ToBase64(JSON.stringify(index, null, 2));
+  await uploadFileToGitHub(PHOTOS_JSON_PATH, base64, 'Update photo index');
+}
+
+// ====== 上传照片 ======
+async function uploadPhotos(files) {
+  showOverlay(`正在上传 ${files.length} 张照片...`);
+  let successCount = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      document.getElementById('overlayText').textContent = `正在上传第 ${i + 1}/${files.length} 张...`;
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(`第 ${i + 1} 张照片超过 10MB，已跳过`, true);
+        continue;
+      }
+      const base64 = await fileToBase64(file);
+      const ext = file.name.split('.').pop().toLowerCase();
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8);
+      const filename = `photos/${timestamp}_${random}.${ext}`;
+
+      await uploadFileToGitHub(filename, base64, `Upload wedding photo: ${file.name}`);
+
+      const index = await loadPhotoIndex();
+      index.photos.push({ file: filename, name: file.name, time: timestamp, uploader: '' });
+      await savePhotoIndex(index);
+      successCount++;
+    } catch (err) {
+      console.error('上传失败:', err);
+      showToast(`第 ${i + 1} 张上传失败: ${err.message}`, true);
+    }
+  }
+
+  hideOverlay();
+  if (successCount > 0) {
+    showToast(`🎉 ${successCount} 张照片上传成功！已获得抽奖资格`);
+    loadGallery();
+  }
+}
+
+// ====== 照片墙渲染 ======
+let canvasOffset = { x: 0, y: 0 };
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+let photos = [];
+
+async function loadGallery() {
+  const index = await loadPhotoIndex();
+  photos = index.photos || [];
+  document.getElementById('photoCount').textContent = photos.length > 0 ? `已有 ${photos.length} 张照片上传` : '';
+  renderCanvas();
+}
+
+function renderCanvas() {
+  const inner = document.getElementById('canvasInner');
+  const container = document.getElementById('canvasContainer');
+  inner.innerHTML = '';
+
+  if (photos.length === 0) {
+    const placeholder = document.createElement('div');
+    placeholder.style.cssText = `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#ccc;font-size:13px;letter-spacing:2px;line-height:2;`;
+    placeholder.innerHTML = '等待第一张照片<br>期待你的分享 ✨';
+    inner.appendChild(placeholder);
+    return;
+  }
+
+  const seededRandom = (seed) => { let x = Math.sin(seed * 9999) * 10000; return x - Math.floor(x); };
+  const VIRTUAL_W = 3000, VIRTUAL_H = 2500;
+
+  photos.forEach((photo, i) => {
+    const item = document.createElement('div');
+    item.className = 'photo-item';
+    const seed = i + 1;
+    const r1 = seededRandom(seed), r2 = seededRandom(seed + 100), r3 = seededRandom(seed + 200);
+    const baseSize = 80 + r1 * 80;
+    const w = baseSize, h = baseSize * (0.75 + r2 * 0.5);
+    const left = r1 * (VIRTUAL_W - w), top = r2 * (VIRTUAL_H - h);
+    const rotate = (r3 - 0.5) * 8;
+
+    item.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;transform:rotate(${rotate}deg);opacity:0;transition:opacity 0.8s ease ${i * 0.05}s;`;
+
+    const img = document.createElement('img');
+    img.src = `${RAW_BASE}/${photo.file}?t=${photo.time}`;
+    img.loading = 'lazy';
+    img.alt = photo.name || '婚礼照片';
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => { img.style.display = 'none'; item.style.background = '#e8e6e3'; };
+    item.appendChild(img);
+    inner.appendChild(item);
+
+    requestAnimationFrame(() => { setTimeout(() => { item.style.opacity = '1'; }, 50); });
+  });
+
+  centerCanvas();
+}
+
+function centerCanvas() {
+  const container = document.getElementById('canvasContainer');
+  canvasOffset.x = (container.clientWidth - 3000) / 2;
+  canvasOffset.y = (container.clientHeight - 2500) / 2;
+  applyTransform();
+}
+function applyTransform() {
+  document.getElementById('canvasInner').style.transform = `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`;
+}
+
+// ====== 拖拽交互 ======
+const container = document.getElementById('canvasContainer');
+container.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  dragStart.x = e.clientX - canvasOffset.x;
+  dragStart.y = e.clientY - canvasOffset.y;
+  container.style.cursor = 'grabbing';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  canvasOffset.x = e.clientX - dragStart.x;
+  canvasOffset.y = e.clientY - dragStart.y;
+  applyTransform();
+});
+document.addEventListener('mouseup', () => { isDragging = false; container.style.cursor = 'grab'; });
+
+container.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    dragStart.x = e.touches[0].clientX - canvasOffset.x;
+    dragStart.y = e.touches[0].clientY - canvasOffset.y;
+  }
+}, { passive: true });
+container.addEventListener('touchmove', (e) => {
+  if (!isDragging || e.touches.length !== 1) return;
+  canvasOffset.x = e.touches[0].clientX - dragStart.x;
+  canvasOffset.y = e.touches[0].clientY - dragStart.y;
+  applyTransform();
+}, { passive: true });
+container.addEventListener('touchend', () => { isDragging = false; });
+
+// ====== 上传按钮 ======
+document.getElementById('uploadBtn').addEventListener('click', () => {
+  if (!GITHUB_TOKEN || GITHUB_TOKEN.startsWith('YOUR_')) {
+    showToast('请先配置 GitHub Token', true);
+    return;
+  }
+  document.getElementById('fileInput').click();
+});
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+  e.target.value = '';
+  await uploadPhotos(files);
+});
+
+loadGallery();
+</script>
+</body>
+</html>

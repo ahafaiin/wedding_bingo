@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚礼照片抽奖 · 大屏展示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    background: #fff; color: #1a1a1a; overflow: hidden; height: 100vh; width: 100vw;
+  }
+  #canvasBg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+  #canvasInner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; will-change: transform; }
+  .bg-photo {
+    position: absolute; border-radius: 3px; overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    opacity: 0.55; transition: opacity 0.8s ease, box-shadow 0.8s ease, transform 0.8s ease;
+  }
+  .bg-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .bg-photo.highlight {
+    opacity: 1; box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    z-index: 10; transform: scale(1.08);
+  }
+  .bg-photo.dimmed { opacity: 0.15; }
+
+  .center-label {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 5; text-align: center; pointer-events: none; transition: opacity 0.5s ease;
+  }
+  .center-label h1 {
+    font-size: clamp(28px, 5vw, 64px); font-weight: 800; letter-spacing: 12px;
+    color: rgba(26,26,26,0.12); text-transform: uppercase; white-space: nowrap;
+  }
+  .center-label.hidden { opacity: 0; }
+
+  .winner-overlay {
+    position: fixed; inset: 0; background: rgba(248,247,244,0.92);
+    z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.6s ease; backdrop-filter: blur(20px);
+  }
+  .winner-overlay.show { opacity: 1; pointer-events: all; }
+  .winner-photo {
+    width: min(60vw, 500px); height: min(60vh, 500px);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.25);
+    transform: scale(0.8); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #eee;
+  }
+  .winner-overlay.show .winner-photo { transform: scale(1); }
+  .winner-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .winner-label {
+    margin-top: 32px; font-size: clamp(16px, 2vw, 24px); letter-spacing: 8px;
+    color: #1a1a1a; font-weight: 600; opacity: 0; transform: translateY(20px);
+    transition: all 0.6s ease 0.3s;
+  }
+  .winner-overlay.show .winner-label { opacity: 1; transform: translateY(0); }
+  .winner-sub {
+    margin-top: 12px; font-size: 14px; color: #aaa; letter-spacing: 4px;
+    opacity: 0; transition: opacity 0.6s ease 0.5s;
+  }
+  .winner-overlay.show .winner-sub { opacity: 1; }
+
+  .close-btn {
+    position: fixed; top: 32px; right: 32px; z-index: 101;
+    width: 44px; height: 44px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.06); color: #666; font-size: 20px; cursor: pointer;
+    display: none; align-items: center; justify-content: center; transition: background 0.3s;
+  }
+  .close-btn:hover { background: rgba(0,0,0,0.12); }
+  .close-btn.show { display: flex; }
+
+  .control-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    padding: 28px 40px; display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
+    pointer-events: none;
+  }
+  .control-bar > * { pointer-events: all; }
+  .photo-count-badge { font-size: 13px; color: #999; letter-spacing: 2px; }
+
+  .draw-btn {
+    background: #1a1a1a; color: #fff; border: none; padding: 18px 64px;
+    border-radius: 60px; font-size: 18px; font-weight: 700; letter-spacing: 6px;
+    cursor: pointer; transition: all 0.3s ease;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.2); position: relative; overflow: hidden;
+  }
+  .draw-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .draw-btn:active:not(:disabled) { transform: translateY(0); }
+  .draw-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+  .draw-btn.rolling { background: #c0392b; animation: pulse 0.6s ease infinite alternate; }
+  @keyframes pulse {
+    from { box-shadow: 0 6px 30px rgba(192,57,43,0.3); }
+    to   { box-shadow: 0 6px 50px rgba(192,57,43,0.6); }
+  }
+  .status-text { font-size: 13px; color: #aaa; letter-spacing: 2px; }
+
+  .bg-photo.won { opacity: 0.1 !important; filter: grayscale(1); }
+  .bg-photo.won::after {
+    content: '✓'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: rgba(255,255,255,0.8); background: rgba(39,174,96,0.5);
+  }
+</style>
+</head>
+<body>
+
+<div id="canvasBg"><div id="canvasInner"></div></div>
+
+<div class="center-label" id="centerLabel"><h1>Infinite Canvas</h1></div>
+
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="winner-photo" id="winnerPhoto"></div>
+  <div class="winner-label">恭喜这位宾客</div>
+  <div class="winner-sub">请凭此照片到签到台领取奖品</div>
+</div>
+<button class="close-btn" id="closeBtn" onclick="closeWinner()">✕</button>
+
+<div class="control-bar">
+  <div class="photo-count-badge" id="countBadge">加载中...</div>
+  <button class="draw-btn" id="drawBtn">开 始 抽 奖</button>
+  <div class="status-text" id="statusText">按空格键也可抽奖</div>
+</div>
+
+<script>
+// ====== 配置区域（与 upload.html 保持一致） ======
+const GITHUB_OWNER = 'ahafaiin';
+const GITHUB_REPO  = 'wedding_bingo';
+const GITHUB_BRANCH = 'main';
+// ================================================
+
+const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+
+let photos = [];
+let wonPhotos = new Set();
+let isRolling = false;
+
+async function loadPhotos() {
+  try {
+    const resp = await fetch(`${RAW_BASE}/photos.json?t=${Date.now()}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      photos = data.photos || [];
+    }
+  } catch (e) { console.error('加载照片失败:', e); }
+
+  document.getElementById('countBadge').textContent = `共 ${photos.length} 张照片参与抽奖`;
+  if (photos.length === 0) {
+    document.getElementById('drawBtn').disabled = true;
+    document.getElementById('statusText').textContent = '暂无照片，等待宾客上传...';
+  } else {
+    document.getElementById('drawBtn').disabled = false;
+    document.getElementById('statusText').textContent = '按空格键也可抽奖';
+  }
+  renderBackground();
+}
+
+const seededRandom = (seed) => { let x = Math.sin(seed * 9999) * 10000; return x - Math.floor(x); };
+
+function renderBackground() {
+  const inner = document.getElementById('canvasInner');
+  inner.innerHTML = '';
+  if (photos.length === 0) return;
+
+  const VIRTUAL_W = 4000, VIRTUAL_H = 3000;
+  const sorted = [...photos].sort((a, b) => (a.time || 0) - (b.time || 0));
+
+  sorted.forEach((photo, i) => {
+    const seed = i + 1;
+    const r1 = seededRandom(seed), r2 = seededRandom(seed + 100), r3 = seededRandom(seed + 200);
+    const item = document.createElement('div');
+    item.className = 'bg-photo';
+    item.dataset.index = i;
+    item.dataset.file = photo.file;
+
+    const w = 100 + r1 * 140;
+    const h = w * (0.6 + r2 * 0.6);
+    const left = r1 * (VIRTUAL_W - w);
+    const top = r2 * (VIRTUAL_H - h);
+    const rotate = (r3 - 0.5) * 6;
+
+    item.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;transform:rotate(${rotate}deg);`;
+    const img = document.createElement('img');
+    img.src = `${RAW_BASE}/${photo.file}?t=${photo.time}`;
+    img.alt = '婚礼照片';
+    img.loading = 'lazy';
+    item.appendChild(img);
+    inner.appendChild(item);
+  });
+
+  const container = document.getElementById('canvasBg');
+  canvasOffset.x = (container.clientWidth - VIRTUAL_W) / 2;
+  canvasOffset.y = (container.clientHeight - VIRTUAL_H) / 2;
+  applyBgTransform();
+}
+
+// ====== 画布平移 ======
+let canvasOffset = { x: 0, y: 0 };
+let panSpeed = { x: 0.15, y: 0.08 };
+
+function applyBgTransform() {
+  const inner = document.getElementById('canvasInner');
+  const VIRTUAL_W = 4000, VIRTUAL_H = 3000;
+  const container = document.getElementById('canvasBg');
+  if (canvasOffset.x < -VIRTUAL_W + container.clientWidth) canvasOffset.x = 0;
+  if (canvasOffset.x > 0) canvasOffset.x = -VIRTUAL_W + container.clientWidth;
+  if (canvasOffset.y < -VIRTUAL_H + container.clientHeight) canvasOffset.y = 0;
+  if (canvasOffset.y > 0) canvasOffset.y = -VIRTUAL_H + container.clientHeight;
+  inner.style.transform = `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`;
+}
+
+let autoPanRAF;
+function startAutoPan() {
+  cancelAnimationFrame(autoPanRAF);
+  let lastTime = performance.now();
+  function panLoop(time) {
+    const dt = time - lastTime; lastTime = time;
+    if (!isRolling) {
+      canvasOffset.x -= panSpeed.x * dt * 0.06;
+      canvasOffset.y -= panSpeed.y * dt * 0.06;
+    }
+    const VIRTUAL_W = 4000, VIRTUAL_H = 3000;
+    const container = document.getElementById('canvasBg');
+    if (canvasOffset.x < -VIRTUAL_W + container.clientWidth || canvasOffset.x > 0) panSpeed.x *= -1;
+    if (canvasOffset.y < -VIRTUAL_H + container.clientHeight || canvasOffset.y > 0) panSpeed.y *= -1;
+    canvasOffset.x = Math.max(-VIRTUAL_W + container.clientWidth, Math.min(0, canvasOffset.x));
+    canvasOffset.y = Math.max(-VIRTUAL_H + container.clientHeight, Math.min(0, canvasOffset.y));
+    applyBgTransform();
+    autoPanRAF = requestAnimationFrame(panLoop);
+  }
+  autoPanRAF = requestAnimationFrame(panLoop);
+}
+
+document.getElementById('canvasBg').addEventListener('mousedown', (e) => {
+  if (e.target.closest('.control-bar')) return;
+  let sx = e.clientX, sy = e.clientY;
+  let sox = canvasOffset.x, soy = canvasOffset.y;
+  function onMove(ev) {
+    canvasOffset.x = sox + (ev.clientX - sx);
+    canvasOffset.y = soy + (ev.clientY - sy);
+    applyBgTransform();
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+});
+
+// ====== 抽奖逻辑 ======
+function getAvailablePhotos() { return photos.filter(p => !wonPhotos.has(p.file)); }
+
+let rollInterval;
+
+async function startDraw() {
+  const available = getAvailablePhotos();
+  if (available.length === 0) {
+    document.getElementById('statusText').textContent = '所有照片都已中奖！';
+    return;
+  }
+
+  isRolling = true;
+  const btn = document.getElementById('drawBtn');
+  btn.classList.add('rolling');
+  btn.textContent = '抽 奖 中...';
+  btn.disabled = true;
+  document.getElementById('centerLabel').classList.add('hidden');
+  document.getElementById('statusText').textContent = '正在随机选取...';
+
+  const allPhotos = document.querySelectorAll('.bg-photo');
+  allPhotos.forEach(p => p.classList.remove('highlight', 'dimmed'));
+
+  let rollCount = 0;
+  const totalRolls = 30 + Math.floor(Math.random() * 20);
+
+  rollInterval = setInterval(() => {
+    rollCount++;
+    const availIdx = available[Math.floor(Math.random() * available.length)];
+    const targetIdx = photos.indexOf(availIdx);
+    const targetEl = document.querySelector(`.bg-photo[data-index="${targetIdx}"]`);
+
+    if (targetEl) {
+      allPhotos.forEach(p => p.classList.remove('highlight'));
+      targetEl.classList.add('highlight');
+      const container = document.getElementById('canvasBg');
+      const elLeft = parseFloat(targetEl.style.left);
+      const elTop = parseFloat(targetEl.style.top);
+      const elW = targetEl.offsetWidth, elH = targetEl.offsetHeight;
+      canvasOffset.x = -(elLeft + elW / 2 - container.clientWidth / 2);
+      canvasOffset.y = -(elTop + elH / 2 - container.clientHeight / 2);
+      applyBgTransform();
+    }
+
+    if (rollCount >= totalRolls) {
+      clearInterval(rollInterval);
+      finishDraw();
+    }
+  }, 80);
+
+  function finishDraw() {
+    const finalPhoto = available[Math.floor(Math.random() * available.length)];
+    const finalIdx = photos.indexOf(finalPhoto);
+    const finalEl = document.querySelector(`.bg-photo[data-index="${finalIdx}"]`);
+
+    allPhotos.forEach(p => p.classList.remove('highlight'));
+    if (finalEl) {
+      finalEl.classList.add('highlight');
+      const container = document.getElementById('canvasBg');
+      const elLeft = parseFloat(finalEl.style.left);
+      const elTop = parseFloat(finalEl.style.top);
+      const elW = finalEl.offsetWidth, elH = finalEl.offsetHeight;
+      canvasOffset.x = -(elLeft + elW / 2 - container.clientWidth / 2);
+      canvasOffset.y = -(elTop + elH / 2 - container.clientHeight / 2);
+      applyBgTransform();
+    }
+
+    wonPhotos.add(finalPhoto.file);
+    setTimeout(() => { if (finalEl) finalEl.classList.add('won'); }, 1000);
+    setTimeout(() => { showWinner(finalPhoto); }, 800);
+
+    isRolling = false;
+    btn.classList.remove('rolling');
+    btn.textContent = '继 续 抽 奖';
+    btn.disabled = false;
+    document.getElementById('statusText').textContent =
+      `已抽出 ${wonPhotos.size} 位 · 还剩 ${getAvailablePhotos().length} 张`;
+
+    if (getAvailablePhotos().length === 0) {
+      btn.disabled = true;
+      btn.textContent = '已 全 部 抽 完';
+      document.getElementById('statusText').textContent = '感谢所有宾客的参与！🎉';
+    }
+  }
+}
+
+function showWinner(photo) {
+  const overlay = document.getElementById('winnerOverlay');
+  const photoDiv = document.getElementById('winnerPhoto');
+  photoDiv.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = `${RAW_BASE}/${photo.file}?t=${photo.time}`;
+  img.alt = '中奖照片';
+  photoDiv.appendChild(img);
+  overlay.classList.add('show');
+  document.getElementById('closeBtn').classList.add('show');
+}
+
+function closeWinner() {
+  document.getElementById('winnerOverlay').classList.remove('show');
+  document.getElementById('closeBtn').classList.remove('show');
+  document.getElementById('centerLabel').classList.remove('hidden');
+}
+
+document.getElementById('drawBtn').addEventListener('click', () => { if (!isRolling) startDraw(); });
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !isRolling) { e.preventDefault(); startDraw(); }
+  if (e.code === 'Escape') closeWinner();
+});
+
+loadPhotos();
+setInterval(loadPhotos, 30000);
+startAutoPan();
+</script>
+</body>
+</html>
