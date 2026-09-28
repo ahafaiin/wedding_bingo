@@ -107,14 +107,13 @@
 
 <script>
 // ====== 配置区域 ======
+const WORKER_URL = 'https://throbbing-truth-cb51.1253807779.workers.dev'; // ← 替换为你的 Worker 地址
 const GITHUB_OWNER = 'ahafaiin';
 const GITHUB_REPO  = 'wedding_bingo';
 const GITHUB_BRANCH = 'main';
-// const GITHUB_TOKEN = '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';
-const GITHUB_TOKEN = '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'
 // =====================
 
-const API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents`;
+const API_BASE = `${WORKER_URL}/contents`;
 const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const PHOTOS_JSON_PATH = 'photos.json';
 
@@ -150,43 +149,35 @@ function fileToBase64(file) {
   });
 }
 
-// ====== GitHub API ======
-async function getFileSha(path) {
-  try {
-    const resp = await fetch(`${API_BASE}/${path}?ref=${GITHUB_BRANCH}&t=${Date.now()}`, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      return data.sha;
-    }
-  } catch (e) {}
-  return null;
+// ====== 通过 Worker 与 GitHub 交互 ======
+async function getFile(path) {
+  const resp = await fetch(`${API_BASE}/${path}?ref=${GITHUB_BRANCH}&t=${Date.now()}`);
+  if (!resp.ok) return null;
+  return await resp.json();
 }
 
-async function uploadFileToGitHub(path, base64Content, commitMsg) {
+async function putFile(path, base64Content, commitMsg) {
   const body = { message: commitMsg, content: base64Content, branch: GITHUB_BRANCH };
-  const sha = await getFileSha(path);
-  if (sha) body.sha = sha;
+  const existing = await getFile(path);
+  if (existing && existing.sha) body.sha = existing.sha;
+
   const resp = await fetch(`${API_BASE}/${path}`, {
     method: 'PUT',
-    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+
   if (!resp.ok) {
-    const err = await resp.json();
-    throw new Error(err.message || '上传失败');
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || `上传失败 (${resp.status})`);
   }
-  return resp.json();
+  return await resp.json();
 }
 
 async function loadPhotoIndex() {
   try {
-    const resp = await fetch(`${API_BASE}/${PHOTOS_JSON_PATH}?ref=${GITHUB_BRANCH}&t=${Date.now()}`, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-    });
-    if (resp.ok) {
-      const data = await resp.json();
+    const data = await getFile(PHOTOS_JSON_PATH);
+    if (data && data.content) {
       return JSON.parse(base64ToUtf8(data.content));
     }
   } catch (e) { console.warn('加载索引失败', e); }
@@ -196,7 +187,7 @@ async function loadPhotoIndex() {
 async function savePhotoIndex(index) {
   index.lastUpdated = new Date().toISOString();
   const base64 = utf8ToBase64(JSON.stringify(index, null, 2));
-  await uploadFileToGitHub(PHOTOS_JSON_PATH, base64, 'Update photo index');
+  await putFile(PHOTOS_JSON_PATH, base64, 'Update photo index');
 }
 
 // ====== 上传照片 ======
@@ -218,11 +209,13 @@ async function uploadPhotos(files) {
       const random = Math.random().toString(36).substring(2, 8);
       const filename = `photos/${timestamp}_${random}.${ext}`;
 
-      await uploadFileToGitHub(filename, base64, `Upload wedding photo: ${file.name}`);
+      await putFile(filename, base64, `Upload wedding photo: ${file.name}`);
 
+      // 重新加载最新索引，避免多个宾客同时上传导致覆盖
       const index = await loadPhotoIndex();
       index.photos.push({ file: filename, name: file.name, time: timestamp, uploader: '' });
       await savePhotoIndex(index);
+
       successCount++;
     } catch (err) {
       console.error('上传失败:', err);
@@ -252,7 +245,6 @@ async function loadGallery() {
 
 function renderCanvas() {
   const inner = document.getElementById('canvasInner');
-  const container = document.getElementById('canvasContainer');
   inner.innerHTML = '';
 
   if (photos.length === 0) {
@@ -336,10 +328,6 @@ container.addEventListener('touchend', () => { isDragging = false; });
 
 // ====== 上传按钮 ======
 document.getElementById('uploadBtn').addEventListener('click', () => {
-  if (!GITHUB_TOKEN || GITHUB_TOKEN.startsWith('YOUR_')) {
-    showToast('请先配置 GitHub Token', true);
-    return;
-  }
   document.getElementById('fileInput').click();
 });
 document.getElementById('fileInput').addEventListener('change', async (e) => {
