@@ -249,9 +249,11 @@
 const GITHUB_OWNER = 'ahafaiin';
 const GITHUB_REPO  = 'wedding_bingo';
 const GITHUB_BRANCH = 'main';
+const WORKER_URL = 'https://throbbing-truth-cb51.1253807779.workers.dev'; // ← 你的 Worker
 // =====================
 
 const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const API_BASE = `${WORKER_URL}/contents`;
 
 let photos = [];
 let wonPhotos = new Set();
@@ -262,15 +264,39 @@ let VIRTUAL_W = 3000;
 let VIRTUAL_H = 2000;
 const canvasOffset = { x: 0, y: 0 };
 
-// ====== 加载照片 ======
+// ====== base64 转 utf8 ======
+function base64ToUtf8(base64) {
+  const binary = atob(base64.replace(/\n/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+// ====== 加载照片（通过 Worker 走 GitHub API，无缓存） ======
 async function loadPhotos() {
   try {
-    const resp = await fetch(`${RAW_BASE}/photos.json?t=${Date.now()}`);
+    // ⭐ 主路径：通过 Worker 代理 GitHub API（无缓存，实时最新）
+    const resp = await fetch(`${API_BASE}/photos.json?ref=${GITHUB_BRANCH}&t=${Date.now()}`, {
+      cache: 'no-store'
+    });
     if (resp.ok) {
       const data = await resp.json();
-      photos = data.photos || [];
+      if (data.content) {
+        const parsed = JSON.parse(base64ToUtf8(data.content));
+        photos = parsed.photos || [];
+      }
     }
-  } catch (e) { console.error('加载照片失败:', e); }
+  } catch (e) {
+    console.error('通过 Worker 加载失败，回退到 raw URL:', e);
+    // 兜底：raw URL（可能仍有 CDN 缓存）
+    try {
+      const resp2 = await fetch(`${RAW_BASE}/photos.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (resp2.ok) {
+        const data2 = await resp2.json();
+        photos = data2.photos || [];
+      }
+    } catch (e2) { console.error('兜底加载也失败:', e2); }
+  }
 
   document.getElementById('countBadge').textContent = `共 ${photos.length} 张照片参与抽奖`;
   if (photos.length === 0) {
@@ -294,9 +320,8 @@ function renderBackground() {
   inner.innerHTML = '';
   if (photos.length === 0) return;
 
-  // 根据照片数量动态调整画布大小，让照片铺得更满
+  // 根据照片数量动态调整画布大小
   const n = photos.length;
-  // 每张照片约占 500x400 的空间，找出最接近正方形的布局
   const cols = Math.max(2, Math.ceil(Math.sqrt(n * 1.3)));
   const rows = Math.max(2, Math.ceil(n / cols));
 
@@ -305,7 +330,7 @@ function renderBackground() {
   VIRTUAL_W = cols * CELL_W;
   VIRTUAL_H = rows * CELL_H;
 
-  // 按上传时间排序（老照片在左上，新照片在右下）
+  // 按上传时间排序
   const sorted = [...photos].sort((a, b) => (a.time || 0) - (b.time || 0));
 
   sorted.forEach((photo, i) => {
@@ -318,16 +343,13 @@ function renderBackground() {
     const col = i % cols;
     const row = Math.floor(i / cols);
 
-    // 格子内的位置 + 抖动
     const jitterX = (r1 - 0.5) * (CELL_W * 0.5);
     const jitterY = (r2 - 0.5) * (CELL_H * 0.5);
     const left = col * CELL_W + CELL_W * 0.5 + jitterX;
     const top  = row * CELL_H + CELL_H * 0.5 + jitterY;
 
-    // 尺寸：保证足够大，肉眼可见
-    const w = 200 + r3 * 160;      // 200 ~ 360
-    const h = w * (0.72 + r4 * 0.4); // 保持接近原比例
-
+    const w = 200 + r3 * 160;
+    const h = w * (0.72 + r4 * 0.4);
     const rotate = (r1 - 0.5) * 10;
 
     const item = document.createElement('div');
@@ -344,14 +366,15 @@ function renderBackground() {
     `;
 
     const img = document.createElement('img');
-    img.src = `${RAW_BASE}/${photo.file}?t=${photo.time}`;
+    // ⭐ 图片也加 ?v=时间戳 强制刷新（虽然每次文件名不同，但保险起见）
+    img.src = `${RAW_BASE}/${photo.file}?v=${photo.time}`;
     img.alt = '婚礼照片';
     img.loading = 'eager';
     item.appendChild(img);
     inner.appendChild(item);
   });
 
-  // 初始视角：居中
+  // 初始视角居中
   const container = document.getElementById('canvasBg');
   canvasOffset.x = (container.clientWidth - VIRTUAL_W) / 2;
   canvasOffset.y = (container.clientHeight - VIRTUAL_H) / 2;
@@ -364,7 +387,6 @@ function applyBgTransform() {
     `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`;
 }
 
-// 平滑移动到目标偏移
 function smoothMoveTo(targetX, targetY, duration = 600) {
   return new Promise(resolve => {
     const startX = canvasOffset.x;
@@ -373,7 +395,6 @@ function smoothMoveTo(targetX, targetY, duration = 600) {
 
     function step(now) {
       const t = Math.min(1, (now - startTime) / duration);
-      // easeOutCubic
       const ease = 1 - Math.pow(1 - t, 3);
       canvasOffset.x = startX + (targetX - startX) * ease;
       canvasOffset.y = startY + (targetY - startY) * ease;
@@ -385,7 +406,7 @@ function smoothMoveTo(targetX, targetY, duration = 600) {
   });
 }
 
-// 自动缓慢漂移（空闲时）
+// 自动缓慢漂移
 let panDirection = { x: 1, y: 1 };
 let autoPanRAF;
 function startAutoPan() {
@@ -441,7 +462,6 @@ function getElementCenter(el) {
   const left = parseFloat(el.style.left);
   const top = parseFloat(el.style.top);
   return {
-    // 让元素中心对准视口中心
     targetX: -(left + w / 2 - container.clientWidth / 2),
     targetY: -(top + h / 2 - container.clientHeight / 2)
   };
@@ -466,9 +486,8 @@ async function startDraw() {
   allEls.forEach(el => el.classList.remove('spotlight', 'winner', 'won'));
 
   // ============ 阶段一：快速浏览所有照片 ============
-  // 依次高亮每张照片，相机跟随滚动
-  const tourOrder = [...available].sort(() => Math.random() - 0.5); // 打乱顺序
-  const tourRounds = 2; // 完整浏览 2 圈
+  const tourOrder = [...available].sort(() => Math.random() - 0.5);
+  const tourRounds = 2;
   const perPhotoDuration = 260;
 
   for (let round = 0; round < tourRounds; round++) {
@@ -478,7 +497,6 @@ async function startDraw() {
       const el = document.querySelector(`.bg-photo[data-index="${idx}"]`);
       if (!el) continue;
 
-      // 移除上一张的高亮
       document.querySelectorAll('.bg-photo.spotlight').forEach(p => p.classList.remove('spotlight'));
       el.classList.add('spotlight');
 
@@ -487,10 +505,9 @@ async function startDraw() {
     }
   }
 
-  // ============ 阶段二：减速慢下来，进入最终选择 ============
+  // ============ 阶段二：减速慢下来 ============
   document.getElementById('statusText').textContent = '即将揭晓...';
 
-  // 最后再随机浏览几张，速度逐渐变慢
   const lastFew = 6;
   for (let i = 0; i < lastFew; i++) {
     const photo = tourOrder[Math.floor(Math.random() * tourOrder.length)];
@@ -502,7 +519,7 @@ async function startDraw() {
     el.classList.add('spotlight');
 
     const { targetX, targetY } = getElementCenter(el);
-    const duration = 260 + i * 80; // 逐渐变慢
+    const duration = 260 + i * 80;
     await smoothMoveTo(targetX, targetY, duration);
     await new Promise(r => setTimeout(r, 60 + i * 40));
   }
@@ -524,10 +541,8 @@ async function startDraw() {
   wonPhotos.add(finalPhoto.file);
   await new Promise(r => setTimeout(r, 400));
 
-  // 弹窗展示中奖照片
   showWinner(finalPhoto);
 
-  // 恢复按钮
   isRolling = false;
   btn.classList.remove('rolling');
   btn.textContent = '继 续 抽 奖';
@@ -550,7 +565,7 @@ function showWinner(photo) {
   const photoDiv = document.getElementById('winnerPhoto');
   photoDiv.innerHTML = '';
   const img = document.createElement('img');
-  img.src = `${RAW_BASE}/${photo.file}?t=${photo.time}`;
+  img.src = `${RAW_BASE}/${photo.file}?v=${photo.time}`;
   img.alt = '中奖照片';
   photoDiv.appendChild(img);
   overlay.classList.add('show');
@@ -563,7 +578,6 @@ function closeWinner() {
   document.getElementById('closeBtn').classList.remove('show');
   document.getElementById('centerLabel').classList.remove('hidden');
 
-  // 中奖照片恢复成"已中奖"状态
   document.querySelectorAll('.bg-photo.winner').forEach(el => {
     el.classList.remove('winner');
     el.classList.add('won');
